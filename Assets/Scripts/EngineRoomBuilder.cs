@@ -42,7 +42,7 @@ public class EngineRoomBuilder : MonoBehaviour
         var constructorDeclarations = allNodes.OfType<ConstructorDeclarationSyntax>();
 
         // Generating reference information for each element
-        var referencedSymbols = new Dictionary<ISymbol, List<SyntaxNode>>();
+        var referencedSymbols = new Dictionary<ISymbol, HashSet<string>>();
 
         foreach (var semanticModel in semanticModelList)
         {
@@ -53,10 +53,21 @@ public class EngineRoomBuilder : MonoBehaviour
                 {
                     if (!referencedSymbols.ContainsKey(symbolInfo.Symbol))
                     {
-                        referencedSymbols[symbolInfo.Symbol] = new List<SyntaxNode>();
+                        referencedSymbols[symbolInfo.Symbol] = new HashSet<string>();
                     }
 
-                    referencedSymbols[symbolInfo.Symbol].Add(syntaxNode);
+                    // Get the containing method or constructor for the reference
+                    var containingMethodOrCtor = syntaxNode.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
+                    // Get the containing type for the reference
+                    var containingType = syntaxNode.Ancestors().OfType<TypeDeclarationSyntax>().FirstOrDefault();
+
+                    if(containingMethodOrCtor == null || containingType == null)
+                    {
+                        continue;
+                    }
+
+                    string str = $"{containingType.Identifier}.{containingMethodOrCtor.Identifier}()";
+                    referencedSymbols[symbolInfo.Symbol].Add(str);
                 }
             }
         }
@@ -64,6 +75,10 @@ public class EngineRoomBuilder : MonoBehaviour
         // Output the information for each major element and where they are referenced
         foreach (var entry in referencedSymbols)
         {
+            if(entry.Value.Count == 0)
+            {
+                continue;
+            }
             Debug.Log($"Element: {entry.Key}");
             Debug.Log("Referenced in:");
 

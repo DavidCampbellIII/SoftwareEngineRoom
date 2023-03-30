@@ -9,6 +9,9 @@ public class Main : MonoBehaviour
     private void Start()
     {
         Test();
+
+        LineGridMask mask = new LineGridMask(new Vector2Int(0, 0), new Vector2Int(1, 1));
+        Debug.Log(mask.ShouldMaskPoint(new Vector2Int(0, 1)));
     }
 
     public void Test()
