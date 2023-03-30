@@ -9,6 +9,20 @@ public class LineGridMask : IGridMask
     /// </summary>
     private const float POINT_DISTANCE_THRESHOLD = 0.001f;
 
+    #region Nested Structures
+
+    public class NestedClass
+    {
+        public int num { get; }
+
+        public NestedClass()
+        {
+            num = 0;
+        }
+    }
+
+    #endregion
+
     public Vector2Int startCoord { get; }
     public Vector2Int endCoord { get; }
 

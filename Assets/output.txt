@@ -1,0 +1,85 @@
+Element: AnotherClass.SomeMethod(int) (Method)
+Referenced in:
+	- AnotherClass.Awake()
+
+Element: IGridMask (NamedType)
+Referenced in:
+
+Element: LineGridMask.NestedClass.num (Property)
+Referenced in:
+	- Main.Test()
+
+Element: LineGridMask.startCoord (Property)
+Referenced in:
+	- LineGridMask.ShouldMaskPoint()
+
+Element: LineGridMask this (Parameter)
+Referenced in:
+
+Element: Vector2Int startCoord (Parameter)
+Referenced in:
+
+Element: LineGridMask.endCoord (Property)
+Referenced in:
+	- LineGridMask.ShouldMaskPoint()
+
+Element: Vector2Int endCoord (Parameter)
+Referenced in:
+
+Element: LineGridMask.distanceBetweenInitialPoints (Field)
+Referenced in:
+	- LineGridMask.ShouldMaskPoint()
+
+Element: Vector2Int point (Parameter)
+Referenced in:
+	- LineGridMask.ShouldMaskPoint()
+
+Element: dist (Local)
+Referenced in:
+	- LineGridMask.ShouldMaskPoint()
+
+Element: LineGridMask.POINT_DISTANCE_THRESHOLD (Field)
+Referenced in:
+	- LineGridMask.ShouldMaskPoint()
+
+Element: LineGridMask.NestedClass (NamedType)
+Referenced in:
+	- Main.Start()
+
+Element: LineGridMask (NamedType)
+Referenced in:
+	- Main.Start()
+
+Element: LineGridMask.LineGridMask(Vector2Int, Vector2Int) (Method)
+Referenced in:
+	- Main.Start()
+
+Element: LineGridMask.ShouldMaskPoint(Vector2Int) (Method)
+Referenced in:
+	- Main.Start()
+
+Element: mask (Local)
+Referenced in:
+	- Main.Start()
+
+Element: Main.nestedClass (Field)
+Referenced in:
+	- Main.Start()
+	- Main.Test()
+
+Element: LineGridMask.NestedClass.NestedClass() (Method)
+Referenced in:
+	- Main.Start()
+
+Element: Main.Test() (Method)
+Referenced in:
+	- Main.Start()
+
+Element: AnotherClass (NamedType)
+Referenced in:
+	- Main.Start()
+
+Element: Main.testFloat (Field)
+Referenced in:
+	- Main.Test()
+

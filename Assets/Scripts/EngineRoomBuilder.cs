@@ -7,6 +7,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Sirenix.OdinInspector;
+using System.Text;
 
 public class EngineRoomBuilder : MonoBehaviour
 {
@@ -17,18 +18,18 @@ public class EngineRoomBuilder : MonoBehaviour
     private void ScanProject()
     {
         string path = Path.Combine(Application.dataPath, rootProjectDirectory);
-        var csharpFiles = Directory.GetFiles(path, "*.cs", SearchOption.AllDirectories);
+        string[] csharpFiles = Directory.GetFiles(path, "*.cs", SearchOption.AllDirectories);
         List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
 
-        foreach (var file in csharpFiles)
+        foreach (string file in csharpFiles)
         {
-            var fileContent = File.ReadAllText(file);
-            var syntaxTree = CSharpSyntaxTree.ParseText(fileContent);
+            string fileContent = File.ReadAllText(file);
+            SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(fileContent);
             syntaxTrees.Add(syntaxTree);
         }
 
-        var compilation = CSharpCompilation.Create("ProjectCompilation", syntaxTrees);
-        var semanticModelList = syntaxTrees.Select(tree => compilation.GetSemanticModel(tree)).ToList();
+        CSharpCompilation compilation = CSharpCompilation.Create("ProjectCompilation", syntaxTrees);
+        List<SemanticModel> semanticModelList = syntaxTrees.Select(tree => compilation.GetSemanticModel(tree)).ToList();
 
         var allNodes = syntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes());
 
@@ -73,19 +74,23 @@ public class EngineRoomBuilder : MonoBehaviour
         }
 
         // Output the information for each major element and where they are referenced
+        StringBuilder output = new StringBuilder();
+
         foreach (var entry in referencedSymbols)
         {
-            if(entry.Value.Count == 0)
-            {
-                continue;
-            }
-            Debug.Log($"Element: {entry.Key}");
-            Debug.Log("Referenced in:");
+            ISymbol symbol = entry.Key;
+            output.AppendLine($"Element: {symbol} ({symbol.Kind})");
+            output.AppendLine("Referenced in:");
 
             foreach (var reference in entry.Value)
             {
-                Debug.Log($"\t- {reference}");
+                output.AppendLine($"\t- {reference}");
             }
+            output.AppendLine();
         }
+
+        // Write the contents to a file
+        string outputFilePath = Path.Combine(Application.dataPath, "output.txt");
+        File.WriteAllText(outputFilePath, output.ToString());
     }
 }
