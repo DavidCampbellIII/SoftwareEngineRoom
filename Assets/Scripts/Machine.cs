@@ -5,11 +5,13 @@ using UnityEngine;
 public class Machine
 {
     public string Name { get; set; }
-    public List<Connection> Connections { get; set; }
+    public List<Machine> inputs { get; }
+    public List<Machine> outputs { get; }
 
     public Machine(string name)
     {
         Name = name;
-        Connections = new List<Connection>();
+        inputs = new List<Machine>();
+        outputs = new List<Machine>();
     }
 }

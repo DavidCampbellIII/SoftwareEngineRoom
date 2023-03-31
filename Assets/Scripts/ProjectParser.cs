@@ -60,6 +60,20 @@ public class ProjectParser : MonoBehaviour
             }
         }
 
+        //Add method symbols to ensure even non-referenced ones are added
+        foreach (var semanticModel in semanticModelList)
+        {
+            SyntaxNode root = semanticModel.SyntaxTree.GetRoot();
+            var methodDeclarations = root.DescendantNodes().OfType<MethodDeclarationSyntax>();
+            foreach(var method in methodDeclarations)
+            {
+                var methodSymbol = semanticModel.GetDeclaredSymbol(method);
+                if (methodSymbol != null && !referencedSymbols.ContainsKey(methodSymbol))
+                {
+                    referencedSymbols.Add(methodSymbol, new HashSet<string>());
+                }
+            }
+        }
 
         foreach (var semanticModel in semanticModelList)
         {
@@ -83,10 +97,8 @@ public class ProjectParser : MonoBehaviour
                     referencedSymbols[symbolInfo.Symbol] = new HashSet<string>();
                 }
 
-                // Get the containing method or constructor for the reference
                 var containingMethod = syntaxNode.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
-                // Get the containing type for the reference
-                var containingType = syntaxNode.Ancestors().OfType<TypeDeclarationSyntax>().FirstOrDefault();
+                var containingType = syntaxNode.Ancestors().OfType<ClassDeclarationSyntax>().FirstOrDefault();
 
                 if (containingType == null)
                 {
@@ -98,13 +110,13 @@ public class ProjectParser : MonoBehaviour
                     ConstructorDeclarationSyntax ctor = syntaxNode.Ancestors().OfType<ConstructorDeclarationSyntax>().FirstOrDefault();
                     if (ctor != null)
                     {
-                        string str = $"{containingType.Identifier}.{ctor.Identifier}()";
+                        string str = $"{semanticModel.GetDeclaredSymbol(ctor)}";
                         referencedSymbols[symbolInfo.Symbol].Add(str);
                     }
                 }
                 else
                 {
-                    string str = $"{containingType.Identifier}.{containingMethod.Identifier}()";
+                    string str = $"{semanticModel.GetDeclaredSymbol(containingMethod)}";
                     referencedSymbols[symbolInfo.Symbol].Add(str);
                 }
             }

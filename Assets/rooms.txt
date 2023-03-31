@@ -1,0 +1,94 @@
+Room: AnotherClass
+	Machines:
+		- Awake()
+			Inputs:
+			Outputs:
+				<--- SomeMethod(int)
+		- SomeMethod(int)
+			Inputs:
+				---> Awake()
+			Outputs:
+-----------------------------------------------------------
+Room: LineGridMask
+	Machines:
+		- ShouldMaskPoint(Vector2Int)
+			Inputs:
+				---> Start()
+			Outputs:
+				<--- startCoord
+				<--- endCoord
+				<--- distanceBetweenInitialPoints
+				<--- POINT_DISTANCE_THRESHOLD
+		- startCoord
+			Inputs:
+				---> LineGridMask(Vector2Int, Vector2Int)
+				---> ShouldMaskPoint(Vector2Int)
+			Outputs:
+		- endCoord
+			Inputs:
+				---> LineGridMask(Vector2Int, Vector2Int)
+				---> ShouldMaskPoint(Vector2Int)
+			Outputs:
+		- distanceBetweenInitialPoints
+			Inputs:
+				---> LineGridMask(Vector2Int, Vector2Int)
+				---> ShouldMaskPoint(Vector2Int)
+			Outputs:
+		- POINT_DISTANCE_THRESHOLD
+			Inputs:
+				---> ShouldMaskPoint(Vector2Int)
+			Outputs:
+		- LineGridMask(Vector2Int, Vector2Int)
+			Inputs:
+				---> Start()
+			Outputs:
+				<--- startCoord
+				<--- endCoord
+				<--- distanceBetweenInitialPoints
+-----------------------------------------------------------
+Room: LineGridMask.NestedClass
+	Machines:
+		- num
+			Inputs:
+				---> NestedClass()
+				---> Test()
+			Outputs:
+		- NestedClass()
+			Inputs:
+				---> Start()
+			Outputs:
+				<--- num
+-----------------------------------------------------------
+Room: Main
+	Machines:
+		- Start()
+			Inputs:
+			Outputs:
+				<--- ShouldMaskPoint(Vector2Int)
+				<--- Test()
+				<--- LineGridMask(Vector2Int, Vector2Int)
+				<--- nestedClass
+				<--- NestedClass()
+		- Test()
+			Inputs:
+				---> Start()
+			Outputs:
+				<--- num
+				<--- nestedClass
+				<--- testFloat
+		- nestedClass
+			Inputs:
+				---> Start()
+				---> Test()
+			Outputs:
+		- testFloat
+			Inputs:
+				---> Test()
+			Outputs:
+-----------------------------------------------------------
+Room: IGridMask
+	Machines:
+		- ShouldMaskPoint(Vector2Int)
+			Inputs:
+			Outputs:
+-----------------------------------------------------------
