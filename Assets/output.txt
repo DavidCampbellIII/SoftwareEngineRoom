@@ -5,6 +5,10 @@ Referenced in:
 Element: YetAnotherClass (NamedType)
 Referenced in:
 
+Element: YetAnotherClass.NestedClass (NamedType)
+Referenced in:
+	- YetAnotherClass.SomeVirtualMethod()
+
 Element: LineGridMask (NamedType)
 Referenced in:
 	- Main.Start()
@@ -48,7 +52,16 @@ Element: Main.Test() (Method)
 Referenced in:
 	- Main.Start()
 
+Element: YetAnotherClass.NestedClass.num (Property)
+Referenced in:
+	- YetAnotherClass.NestedClass.NestedClass()
+	- YetAnotherClass.SomeVirtualMethod()
+
 Element: YetAnotherClass this (Parameter)
+Referenced in:
+	- YetAnotherClass.SomeVirtualMethod()
+
+Element: YetAnotherClass.NestedClass.NestedClass() (Method)
 Referenced in:
 	- YetAnotherClass.SomeVirtualMethod()
 

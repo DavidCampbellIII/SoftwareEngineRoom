@@ -27,9 +27,28 @@ public class AnotherClass : MonoBehaviour
 
 public class YetAnotherClass : AnotherClass
 {
+    #region Nested Structures
+
+    private class NestedClass
+    {
+        public int num { get; set; }
+
+        public NestedClass()
+        {
+            num = 0;
+        }
+    }
+
+    #endregion
+
     public override void SomeVirtualMethod()
     {
         base.SomeVirtualMethod();
         SomeProtectedMethod();
+
+        NestedClass nested = new NestedClass
+        {
+            num = 1
+        };
     }
 }

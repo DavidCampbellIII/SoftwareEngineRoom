@@ -24,6 +24,21 @@ Room: YetAnotherClass
 			Outputs:
 				<--- AnotherClass.SomeVirtualMethod()
 				<--- AnotherClass.SomeProtectedMethod()
+				<--- YetAnotherClass.NestedClass.num
+				<--- YetAnotherClass.NestedClass.NestedClass()
+-----------------------------------------------------------
+Room: YetAnotherClass.NestedClass
+	Machines:
+		- YetAnotherClass.NestedClass.num
+			Inputs:
+				---> YetAnotherClass.NestedClass.NestedClass()
+				---> YetAnotherClass.SomeVirtualMethod()
+			Outputs:
+		- YetAnotherClass.NestedClass.NestedClass()
+			Inputs:
+				---> YetAnotherClass.SomeVirtualMethod()
+			Outputs:
+				<--- YetAnotherClass.NestedClass.num
 -----------------------------------------------------------
 Room: LineGridMask
 	Machines:
