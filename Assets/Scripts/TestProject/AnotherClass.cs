@@ -13,4 +13,23 @@ public class AnotherClass : MonoBehaviour
     {
 
     }
+
+    public virtual void SomeVirtualMethod()
+    {
+
+    }
+
+    protected void SomeProtectedMethod()
+    {
+
+    }
+}
+
+public class YetAnotherClass : AnotherClass
+{
+    public override void SomeVirtualMethod()
+    {
+        base.SomeVirtualMethod();
+        SomeProtectedMethod();
+    }
 }

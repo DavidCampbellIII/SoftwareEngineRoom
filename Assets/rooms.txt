@@ -1,94 +1,110 @@
 Room: AnotherClass
 	Machines:
-		- Awake()
+		- AnotherClass.Awake()
 			Inputs:
 			Outputs:
-				<--- SomeMethod(int)
-		- SomeMethod(int)
+				<--- AnotherClass.SomeMethod(int)
+		- AnotherClass.SomeMethod(int)
 			Inputs:
-				---> Awake()
+				---> AnotherClass.Awake()
 			Outputs:
+		- AnotherClass.SomeVirtualMethod()
+			Inputs:
+				---> YetAnotherClass.SomeVirtualMethod()
+			Outputs:
+		- AnotherClass.SomeProtectedMethod()
+			Inputs:
+				---> YetAnotherClass.SomeVirtualMethod()
+			Outputs:
+-----------------------------------------------------------
+Room: YetAnotherClass
+	Machines:
+		- YetAnotherClass.SomeVirtualMethod()
+			Inputs:
+			Outputs:
+				<--- AnotherClass.SomeVirtualMethod()
+				<--- AnotherClass.SomeProtectedMethod()
 -----------------------------------------------------------
 Room: LineGridMask
 	Machines:
-		- ShouldMaskPoint(Vector2Int)
+		- LineGridMask.ShouldMaskPoint(Vector2Int)
 			Inputs:
-				---> Start()
+				---> Main.Start()
 			Outputs:
-				<--- startCoord
-				<--- endCoord
-				<--- distanceBetweenInitialPoints
-				<--- POINT_DISTANCE_THRESHOLD
-		- startCoord
+				<--- LineGridMask.startCoord
+				<--- LineGridMask.endCoord
+				<--- LineGridMask.distanceBetweenInitialPoints
+				<--- LineGridMask.POINT_DISTANCE_THRESHOLD
+		- LineGridMask.startCoord
 			Inputs:
-				---> LineGridMask(Vector2Int, Vector2Int)
-				---> ShouldMaskPoint(Vector2Int)
+				---> LineGridMask.LineGridMask(Vector2Int, Vector2Int)
+				---> LineGridMask.ShouldMaskPoint(Vector2Int)
 			Outputs:
-		- endCoord
+		- LineGridMask.endCoord
 			Inputs:
-				---> LineGridMask(Vector2Int, Vector2Int)
-				---> ShouldMaskPoint(Vector2Int)
+				---> LineGridMask.LineGridMask(Vector2Int, Vector2Int)
+				---> LineGridMask.ShouldMaskPoint(Vector2Int)
 			Outputs:
-		- distanceBetweenInitialPoints
+		- LineGridMask.distanceBetweenInitialPoints
 			Inputs:
-				---> LineGridMask(Vector2Int, Vector2Int)
-				---> ShouldMaskPoint(Vector2Int)
+				---> LineGridMask.LineGridMask(Vector2Int, Vector2Int)
+				---> LineGridMask.ShouldMaskPoint(Vector2Int)
 			Outputs:
-		- POINT_DISTANCE_THRESHOLD
+		- LineGridMask.POINT_DISTANCE_THRESHOLD
 			Inputs:
-				---> ShouldMaskPoint(Vector2Int)
+				---> LineGridMask.ShouldMaskPoint(Vector2Int)
 			Outputs:
-		- LineGridMask(Vector2Int, Vector2Int)
+		- LineGridMask.LineGridMask(Vector2Int, Vector2Int)
 			Inputs:
-				---> Start()
+				---> Main.Start()
 			Outputs:
-				<--- startCoord
-				<--- endCoord
-				<--- distanceBetweenInitialPoints
+				<--- LineGridMask.startCoord
+				<--- LineGridMask.endCoord
+				<--- LineGridMask.distanceBetweenInitialPoints
 -----------------------------------------------------------
 Room: LineGridMask.NestedClass
 	Machines:
-		- num
+		- LineGridMask.NestedClass.num
 			Inputs:
-				---> NestedClass()
-				---> Test()
+				---> LineGridMask.NestedClass.NestedClass()
+				---> Main.Test()
 			Outputs:
-		- NestedClass()
+		- LineGridMask.NestedClass.NestedClass()
 			Inputs:
-				---> Start()
+				---> Main.Start()
 			Outputs:
-				<--- num
+				<--- LineGridMask.NestedClass.num
 -----------------------------------------------------------
 Room: Main
 	Machines:
-		- Start()
+		- Main.Start()
 			Inputs:
 			Outputs:
-				<--- ShouldMaskPoint(Vector2Int)
-				<--- Test()
-				<--- LineGridMask(Vector2Int, Vector2Int)
-				<--- nestedClass
-				<--- NestedClass()
-		- Test()
+				<--- LineGridMask.ShouldMaskPoint(Vector2Int)
+				<--- Main.Test()
+				<--- LineGridMask.LineGridMask(Vector2Int, Vector2Int)
+				<--- Main.nestedClass
+				<--- LineGridMask.NestedClass.NestedClass()
+		- Main.Test()
 			Inputs:
-				---> Start()
+				---> Main.Start()
 			Outputs:
-				<--- num
-				<--- nestedClass
-				<--- testFloat
-		- nestedClass
+				<--- LineGridMask.NestedClass.num
+				<--- Main.nestedClass
+				<--- Main.testFloat
+		- Main.nestedClass
 			Inputs:
-				---> Start()
-				---> Test()
+				---> Main.Start()
+				---> Main.Test()
 			Outputs:
-		- testFloat
+		- Main.testFloat
 			Inputs:
-				---> Test()
+				---> Main.Test()
 			Outputs:
 -----------------------------------------------------------
 Room: IGridMask
 	Machines:
-		- ShouldMaskPoint(Vector2Int)
+		- IGridMask.ShouldMaskPoint(Vector2Int)
 			Inputs:
 			Outputs:
 -----------------------------------------------------------

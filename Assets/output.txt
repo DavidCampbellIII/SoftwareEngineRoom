@@ -2,6 +2,9 @@ Element: AnotherClass (NamedType)
 Referenced in:
 	- Main.Start()
 
+Element: YetAnotherClass (NamedType)
+Referenced in:
+
 Element: LineGridMask (NamedType)
 Referenced in:
 	- Main.Start()
@@ -20,6 +23,17 @@ Element: AnotherClass.SomeMethod(int) (Method)
 Referenced in:
 	- AnotherClass.Awake()
 
+Element: AnotherClass.SomeVirtualMethod() (Method)
+Referenced in:
+	- YetAnotherClass.SomeVirtualMethod()
+
+Element: AnotherClass.SomeProtectedMethod() (Method)
+Referenced in:
+	- YetAnotherClass.SomeVirtualMethod()
+
+Element: YetAnotherClass.SomeVirtualMethod() (Method)
+Referenced in:
+
 Element: IGridMask.ShouldMaskPoint(Vector2Int) (Method)
 Referenced in:
 
@@ -33,6 +47,10 @@ Referenced in:
 Element: Main.Test() (Method)
 Referenced in:
 	- Main.Start()
+
+Element: YetAnotherClass this (Parameter)
+Referenced in:
+	- YetAnotherClass.SomeVirtualMethod()
 
 Element: IGridMask (NamedType)
 Referenced in:

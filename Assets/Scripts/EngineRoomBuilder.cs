@@ -16,19 +16,16 @@ public class EngineRoomBuilder : MonoBehaviour
     private void BuildLayout()
     {
         Dictionary<ISymbol, HashSet<string>> referencedSymbols = parser.ScanProject(true);
-        // Dictionary to store the rooms
-        var rooms = new Dictionary<string, Room>();
+        Dictionary<string, Room> rooms = new Dictionary<string, Room>();
 
         //Add all rooms on first pass
         foreach (ISymbol symbol in referencedSymbols.Keys)
         {
-            // Check if the symbol is a NamedType (i.e., a class)
             if (symbol.Kind == SymbolKind.NamedType)
             {
                 string className = symbol.ToString();
                 Debug.Log($"Class: {className}");
 
-                // Create a room for the class and add it to the rooms dictionary
                 Room room = new Room(className);
                 rooms.Add(className, room);
             }
@@ -37,20 +34,19 @@ public class EngineRoomBuilder : MonoBehaviour
         //Add all machines in second pass
         foreach (ISymbol symbol in referencedSymbols.Keys)
         {
-            // Check if the symbol is a method, field, or property
             if (symbol.Kind != SymbolKind.Method && symbol.Kind != SymbolKind.Field &&
                 symbol.Kind != SymbolKind.Property)
             {
                 continue;
             }
 
-            var machineName = GetMachineNameFromReference(symbol.ToDisplayString());
+            string machineName = symbol.ToString();
 
             // Get the containing class name
-            var containingClassName = symbol.ContainingType.ToString();
+            string containingClassName = symbol.ContainingType.ToString();
 
             // Create a machine for the method, field, or property and add it to the corresponding room
-            var machine = new Machine(machineName);
+            Machine machine = new Machine(machineName);
             rooms[containingClassName].Machines.Add(machine);
 
             Debug.Log($"Adding Machine: {machineName} in {containingClassName}");
@@ -62,18 +58,17 @@ public class EngineRoomBuilder : MonoBehaviour
             var symbol = entry.Key;
             var references = entry.Value;
 
-            // Check if the symbol is a method, field, or property
             if (symbol.Kind != SymbolKind.Method && symbol.Kind != SymbolKind.Field &&
                 symbol.Kind != SymbolKind.Property)
             {
                 continue;
             }
 
-            string machineName = GetMachineNameFromReference(symbol.ToDisplayString());
+            string machineName = symbol.ToString();
 
             // Get the containing class name
             string containingClassName = symbol.ContainingType.ToString();
-            Machine machine = rooms[containingClassName].Machines.Find(m => m.Name == machineName);
+            Machine machine = rooms[containingClassName].Machines.Find(m => m.ID == machineName);
 
             // Iterate through the references and create connections
             foreach (string reference in references)
@@ -83,13 +78,12 @@ public class EngineRoomBuilder : MonoBehaviour
                 // Extract the target class and method/constructor names
                 string[] targetInfo = reference.Split('.');
                 string targetClassName = string.Join(".", targetInfo.Take(targetInfo.Length - 1));
-                string targetMachineName = $"{targetInfo.Last()}";
+                string targetMachineName = reference;
 
                 //Debug.Log($"Target class: {targetClassName}");
                 //Debug.Log($"Target machine: {targetMachineName}");
 
-                // Create a connection between the machines and add it to the source machine's connections list
-                Machine targetMachine = rooms[targetClassName].Machines.FirstOrDefault(m => m.Name == targetMachineName);
+                Machine targetMachine = rooms[targetClassName].Machines.FirstOrDefault(m => m.ID == targetMachineName);
                 if (targetMachine != null)
                 {
                     machine.inputs.Add(targetMachine);
@@ -105,12 +99,6 @@ public class EngineRoomBuilder : MonoBehaviour
         WriteRoomsToFile(rooms, "rooms");
     }
 
-    private string GetMachineNameFromReference(string reference)
-    {
-        string[] targetInfo = reference.Split('.');
-        return targetInfo.Last();
-    }
-
     private void WriteRoomsToFile(Dictionary<string, Room> rooms, string fileName)
     {
         string path = Path.Combine(Application.dataPath, fileName + ".txt");
@@ -124,19 +112,19 @@ public class EngineRoomBuilder : MonoBehaviour
 
             foreach (Machine machine in room.Machines)
             {
-                WriteIndentedLine(streamWriter, 2, $"- {machine.Name}");
+                WriteIndentedLine(streamWriter, 2, $"- {machine.ID}");
                 WriteIndentedLine(streamWriter, 3, "Inputs:");
 
                 foreach (Machine input in machine.inputs)
                 {
-                    WriteIndentedLine(streamWriter, 4, $"---> {input.Name}");
+                    WriteIndentedLine(streamWriter, 4, $"---> {input.ID}");
                 }
 
                 WriteIndentedLine(streamWriter, 3, "Outputs:");
 
                 foreach (Machine output in machine.outputs)
                 {
-                    WriteIndentedLine(streamWriter, 4, $"<--- {output.Name}");
+                    WriteIndentedLine(streamWriter, 4, $"<--- {output.ID}");
                 }
             }
 
