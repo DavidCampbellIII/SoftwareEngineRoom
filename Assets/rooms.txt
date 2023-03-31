@@ -24,8 +24,18 @@ Room: YetAnotherClass
 			Outputs:
 				<--- AnotherClass.SomeVirtualMethod()
 				<--- AnotherClass.SomeProtectedMethod()
+				<--- YetAnotherClass.CalledByNestedMethod()
 				<--- YetAnotherClass.NestedClass.num
 				<--- YetAnotherClass.NestedClass.NestedClass()
+				<--- NestedMethod(int)
+		- YetAnotherClass.CalledByNestedMethod()
+			Inputs:
+				---> YetAnotherClass.SomeVirtualMethod()
+			Outputs:
+		- NestedMethod(int)
+			Inputs:
+				---> YetAnotherClass.SomeVirtualMethod()
+			Outputs:
 -----------------------------------------------------------
 Room: YetAnotherClass.NestedClass
 	Machines:

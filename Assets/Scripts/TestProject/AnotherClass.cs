@@ -46,9 +46,23 @@ public class YetAnotherClass : AnotherClass
         base.SomeVirtualMethod();
         SomeProtectedMethod();
 
-        NestedClass nested = new NestedClass
+        NestedClass nested = new NestedClass();
+
+        NestedMethod(5);
+
+        #region Nested Methods
+
+        void NestedMethod(int num)
         {
-            num = 1
-        };
+           nested.num = num;
+           CalledByNestedMethod();
+        }
+
+        #endregion
+    }
+
+    private void CalledByNestedMethod()
+    {
+
     }
 }

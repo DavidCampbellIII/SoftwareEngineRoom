@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using System;
 
 public class ProjectParser : MonoBehaviour
 {
@@ -116,8 +117,24 @@ public class ProjectParser : MonoBehaviour
                 }
                 else
                 {
-                    string str = $"{semanticModel.GetDeclaredSymbol(containingMethod)}";
-                    referencedSymbols[symbolInfo.Symbol].Add(str);
+                    //THIS DOES NOT CORRECTLY HANDLE NESTED METHODS
+                    string methodName = $"{semanticModel.GetDeclaredSymbol(containingMethod)}";
+                    if (syntaxNode is LocalFunctionStatementSyntax localMethod)
+                    {
+                        Debug.Log($"Local method found! {semanticModel.GetDeclaredSymbol(localMethod)}");
+                        // Check if the syntax node is a local method
+                        if (containingMethod.DescendantNodes().OfType<LocalFunctionStatementSyntax>().Contains(localMethod))
+                        {
+                            // Prepend the parent method's name to the local method's name
+                            string localMethodName = $"{semanticModel.GetDeclaredSymbol(localMethod)}";
+                            string formattedName = $"{containingType.Identifier}.{methodName}.{localMethodName}";
+                            referencedSymbols[symbolInfo.Symbol].Add(formattedName);
+                        }
+                    }
+                    else
+                    {
+                        referencedSymbols[symbolInfo.Symbol].Add(methodName);
+                    }
                 }
             }
         }

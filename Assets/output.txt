@@ -38,6 +38,10 @@ Referenced in:
 Element: YetAnotherClass.SomeVirtualMethod() (Method)
 Referenced in:
 
+Element: YetAnotherClass.CalledByNestedMethod() (Method)
+Referenced in:
+	- YetAnotherClass.SomeVirtualMethod()
+
 Element: IGridMask.ShouldMaskPoint(Vector2Int) (Method)
 Referenced in:
 
@@ -62,6 +66,18 @@ Referenced in:
 	- YetAnotherClass.SomeVirtualMethod()
 
 Element: YetAnotherClass.NestedClass.NestedClass() (Method)
+Referenced in:
+	- YetAnotherClass.SomeVirtualMethod()
+
+Element: NestedMethod(int) (Method)
+Referenced in:
+	- YetAnotherClass.SomeVirtualMethod()
+
+Element: nested (Local)
+Referenced in:
+	- YetAnotherClass.SomeVirtualMethod()
+
+Element: int num (Parameter)
 Referenced in:
 	- YetAnotherClass.SomeVirtualMethod()
 
