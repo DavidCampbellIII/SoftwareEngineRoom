@@ -1,3 +1,18 @@
+Element: AnotherClass (NamedType)
+Referenced in:
+	- Main.Start()
+
+Element: LineGridMask (NamedType)
+Referenced in:
+	- Main.Start()
+
+Element: LineGridMask.NestedClass (NamedType)
+Referenced in:
+	- Main.Start()
+
+Element: Main (NamedType)
+Referenced in:
+
 Element: AnotherClass.SomeMethod(int) (Method)
 Referenced in:
 	- AnotherClass.Awake()
@@ -7,27 +22,34 @@ Referenced in:
 
 Element: LineGridMask.NestedClass.num (Property)
 Referenced in:
+	- NestedClass.NestedClass()
 	- Main.Test()
 
 Element: LineGridMask.startCoord (Property)
 Referenced in:
+	- LineGridMask.LineGridMask()
 	- LineGridMask.ShouldMaskPoint()
 
 Element: LineGridMask this (Parameter)
 Referenced in:
+	- LineGridMask.LineGridMask()
 
 Element: Vector2Int startCoord (Parameter)
 Referenced in:
+	- LineGridMask.LineGridMask()
 
 Element: LineGridMask.endCoord (Property)
 Referenced in:
+	- LineGridMask.LineGridMask()
 	- LineGridMask.ShouldMaskPoint()
 
 Element: Vector2Int endCoord (Parameter)
 Referenced in:
+	- LineGridMask.LineGridMask()
 
 Element: LineGridMask.distanceBetweenInitialPoints (Field)
 Referenced in:
+	- LineGridMask.LineGridMask()
 	- LineGridMask.ShouldMaskPoint()
 
 Element: Vector2Int point (Parameter)
@@ -41,14 +63,6 @@ Referenced in:
 Element: LineGridMask.POINT_DISTANCE_THRESHOLD (Field)
 Referenced in:
 	- LineGridMask.ShouldMaskPoint()
-
-Element: LineGridMask.NestedClass (NamedType)
-Referenced in:
-	- Main.Start()
-
-Element: LineGridMask (NamedType)
-Referenced in:
-	- Main.Start()
 
 Element: LineGridMask.LineGridMask(Vector2Int, Vector2Int) (Method)
 Referenced in:
@@ -72,10 +86,6 @@ Referenced in:
 	- Main.Start()
 
 Element: Main.Test() (Method)
-Referenced in:
-	- Main.Start()
-
-Element: AnotherClass (NamedType)
 Referenced in:
 	- Main.Start()
 

@@ -1,96 +1,108 @@
+using MyBox;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using UnityEngine;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+using UnityEngine;
+using System.Linq;
+using System.IO;
 using Sirenix.OdinInspector;
-using System.Text;
 
 public class EngineRoomBuilder : MonoBehaviour
 {
-    [SerializeField]
-    private string rootProjectDirectory;
+    [SerializeField, MustBeAssigned]
+    private ProjectParser parser;
 
     [Button]
-    private void ScanProject()
+    private void BuildLayout()
     {
-        string path = Path.Combine(Application.dataPath, rootProjectDirectory);
-        string[] csharpFiles = Directory.GetFiles(path, "*.cs", SearchOption.AllDirectories);
-        List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
+        Dictionary<ISymbol, HashSet<string>> referencedSymbols = parser.ScanProject();
+        // Dictionary to store the rooms
+        var rooms = new Dictionary<string, Room>();
 
-        foreach (string file in csharpFiles)
+        // Iterate through the referencedSymbols dictionary
+        foreach (var entry in referencedSymbols)
         {
-            string fileContent = File.ReadAllText(file);
-            SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(fileContent);
-            syntaxTrees.Add(syntaxTree);
+            var symbol = entry.Key;
+            var references = entry.Value;
+
+            // Check if the symbol is a NamedType (i.e., a class)
+            if (symbol.Kind == SymbolKind.NamedType)
+            {
+                var className = symbol.ToString();
+
+                // Create a room for the class and add it to the rooms dictionary
+                var room = new Room(className);
+                rooms.Add(className, room);
+            }
         }
 
-        CSharpCompilation compilation = CSharpCompilation.Create("ProjectCompilation", syntaxTrees);
-        List<SemanticModel> semanticModelList = syntaxTrees.Select(tree => compilation.GetSemanticModel(tree)).ToList();
-
-        var allNodes = syntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes());
-
-        // Finding all major C# elements
-        var namespaceDeclarations = allNodes.OfType<NamespaceDeclarationSyntax>();
-        var classDeclarations = allNodes.OfType<ClassDeclarationSyntax>();
-        var interfaceDeclarations = allNodes.OfType<InterfaceDeclarationSyntax>();
-        var fieldDeclarations = allNodes.OfType<FieldDeclarationSyntax>();
-        var propertyDeclarations = allNodes.OfType<PropertyDeclarationSyntax>();
-        var methodDeclarations = allNodes.OfType<MethodDeclarationSyntax>();
-        var constructorDeclarations = allNodes.OfType<ConstructorDeclarationSyntax>();
-
-        // Generating reference information for each element
-        var referencedSymbols = new Dictionary<ISymbol, HashSet<string>>();
-
-        foreach (var semanticModel in semanticModelList)
+        // Iterate through the referencedSymbols dictionary again to create machines and connections
+        foreach (var entry in referencedSymbols)
         {
-            foreach (var syntaxNode in semanticModel.SyntaxTree.GetRoot().DescendantNodes())
+            var symbol = entry.Key;
+            var references = entry.Value;
+
+            // Check if the symbol is a method, field, or property
+            if (symbol.Kind != SymbolKind.Method && symbol.Kind != SymbolKind.Field &&
+                symbol.Kind != SymbolKind.Property)
             {
-                var symbolInfo = semanticModel.GetSymbolInfo(syntaxNode);
-                if (symbolInfo.Symbol != null)
+                continue;
+            }
+
+            var machineName = symbol.ToString();
+
+            // Get the containing class name
+            var containingClassName = symbol.ContainingType.ToString();
+
+            // Create a machine for the method, field, or property and add it to the corresponding room
+            var machine = new Machine(machineName);
+            rooms[containingClassName].Machines.Add(machine);
+
+            // Iterate through the references and create connections
+            foreach (var reference in references)
+            {
+                // Extract the target class and method/constructor names
+                var targetInfo = reference.Split('.');
+                var targetClassName = string.Join(".", targetInfo.Take(targetInfo.Length - 1));
+                var targetMachineName = targetInfo.Last();
+
+                // Create a connection between the machines and add it to the source machine's connections list
+                var targetMachine = rooms[targetClassName].Machines.FirstOrDefault(m => m.Name == targetMachineName);
+                if (targetMachine != null)
                 {
-                    if (!referencedSymbols.ContainsKey(symbolInfo.Symbol))
-                    {
-                        referencedSymbols[symbolInfo.Symbol] = new HashSet<string>();
-                    }
-
-                    // Get the containing method or constructor for the reference
-                    var containingMethodOrCtor = syntaxNode.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
-                    // Get the containing type for the reference
-                    var containingType = syntaxNode.Ancestors().OfType<TypeDeclarationSyntax>().FirstOrDefault();
-
-                    if(containingMethodOrCtor == null || containingType == null)
-                    {
-                        continue;
-                    }
-
-                    string str = $"{containingType.Identifier}.{containingMethodOrCtor.Identifier}()";
-                    referencedSymbols[symbolInfo.Symbol].Add(str);
+                    var connection = new Connection(machine, targetMachine);
+                    machine.Connections.Add(connection);
                 }
             }
         }
 
-        // Output the information for each major element and where they are referenced
-        StringBuilder output = new StringBuilder();
+        WriteRoomsToFile(rooms, "rooms");
+    }
 
-        foreach (var entry in referencedSymbols)
+    private void WriteRoomsToFile(Dictionary<string, Room> rooms, string fileName)
+    {
+        string path = Path.Combine(Application.dataPath, fileName, ".txt");
+        using var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write);
+        using var streamWriter = new StreamWriter(fileStream);
+
+        foreach (var roomEntry in rooms)
         {
-            ISymbol symbol = entry.Key;
-            output.AppendLine($"Element: {symbol} ({symbol.Kind})");
-            output.AppendLine("Referenced in:");
+            var room = roomEntry.Value;
+            streamWriter.WriteLine($"Room: {room.Name}");
+            streamWriter.WriteLine("Machines:");
 
-            foreach (var reference in entry.Value)
+            foreach (var machine in room.Machines)
             {
-                output.AppendLine($"\t- {reference}");
-            }
-            output.AppendLine();
-        }
+                streamWriter.WriteLine($"\t- {machine.Name}");
+                streamWriter.WriteLine("\tConnections:");
 
-        // Write the contents to a file
-        string outputFilePath = Path.Combine(Application.dataPath, "output.txt");
-        File.WriteAllText(outputFilePath, output.ToString());
+                foreach (var connection in machine.Connections)
+                {
+                    streamWriter.WriteLine($"\t\t- {connection.Source.Name} -> {connection.Target.Name}");
+                }
+            }
+
+            streamWriter.WriteLine();
+        }
     }
 }
