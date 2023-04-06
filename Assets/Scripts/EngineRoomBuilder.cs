@@ -9,11 +9,46 @@ using Sirenix.OdinInspector;
 
 public class EngineRoomBuilder : MonoBehaviour
 {
+    #region Nested Structures
+
+    private struct MachineInstance
+    {
+        public Machine machine { get; }
+        public Transform transform { get; }
+        
+        public MachineInstance(Machine machine, Transform transform)
+        {
+            this.machine = machine;
+            this.transform = transform;
+        }
+    }
+
+    #endregion
     [SerializeField, MustBeAssigned]
     private ProjectParser parser;
+    [SerializeField, MustBeAssigned]
+    private Transform roomPrefab;
+    [SerializeField, MustBeAssigned]
+    private Transform machinePrefab;
+    [SerializeField]
+    private float roomPadding = 1.0f;
+    [SerializeField]
+    private float machineSpacing = 0.5f;
+    [SerializeField]
+    private float minMachineWidth = 1.0f;
+    [SerializeField]
+    private float minMachineHeight = 1.0f;
+    [SerializeField, MustBeAssigned]
+    private Material connectionMaterial;
 
-    [Button]
-    private void BuildLayout()
+    [Button, ShowIf("@UnityEngine.Application.isPlaying")]
+    private void Generate()
+    {
+        List<Room> rooms = BuildLayout();
+        BuildRooms(rooms);
+    }
+
+    private List<Room> BuildLayout()
     {
         Dictionary<ISymbol, HashSet<string>> referencedSymbols = parser.ScanProject(true);
         Dictionary<string, Room> rooms = new Dictionary<string, Room>();
@@ -97,6 +132,140 @@ public class EngineRoomBuilder : MonoBehaviour
         }
 
         WriteRoomsToFile(rooms, "rooms");
+        return rooms.Values.ToList();
+    }
+
+    private void BuildRooms(List<Room> rooms)
+    {
+        float xOffset = 0;
+
+        foreach (Room room in rooms)
+        {
+            // Instantiate and position the room
+            Transform roomInstance = Instantiate(roomPrefab, new Vector3(xOffset, 0, 0), Quaternion.identity);
+            roomInstance.name = room.Name;
+
+            ScaleRoom(room.Machines.Count, roomInstance);
+
+            Dictionary<string, MachineInstance> machineInstances = new Dictionary<string, MachineInstance>();
+            List<Transform> machineTransforms = new List<Transform>();
+
+            // Instantiate machines and place them along the walls
+            foreach (Machine machine in room.Machines)
+            {
+                Transform machineTransform = Instantiate(machinePrefab);
+                machineTransform.parent = roomInstance;
+                machineTransform.name = machine.Name;
+                machineInstances.Add(machine.ID, new MachineInstance(machine, machineTransform));
+                machineTransforms.Add(machineTransform);
+            }
+
+            PositionMachines(machineTransforms, roomInstance);
+            xOffset += roomInstance.localScale.x + roomPadding;
+
+            // Connect machines
+            foreach (MachineInstance machineInstance in machineInstances.Values)
+            {
+                Machine machine = machineInstance.machine;
+
+                foreach (Machine inputMachine in machine.inputs)
+                {
+                    if (machineInstances.TryGetValue(inputMachine.ID, out MachineInstance inputMachineInstance))
+                    {
+                        ConnectMachines(inputMachineInstance.transform, machineInstance.transform, true);
+                    }
+                }
+
+                foreach (Machine outputMachine in machine.outputs)
+                {
+                    if (machineInstances.TryGetValue(outputMachine.ID, out MachineInstance outputMachineInstance))
+                    {
+                        ConnectMachines(machineInstance.transform, outputMachineInstance.transform, false);
+                    }
+                }
+            }
+        }
+    }
+
+    private void ScaleRoom(int numMachines, Transform roomInstance)
+    {
+        int machinesPerWall = Mathf.CeilToInt(numMachines / 2.0f);
+
+        // Calculate the total width of all machines, including spacing
+        float totalWidth = (minMachineWidth + machineSpacing) * machinesPerWall - machineSpacing;
+
+        // Scale the room to fit all machines
+        Vector3 roomScale = roomInstance.localScale;
+        roomScale.x = Mathf.Max(roomScale.x, totalWidth);
+        roomInstance.localScale = roomScale;
+    }
+
+    private void PositionMachines(List<Transform> machineInstances, Transform roomInstance)
+    {
+        int machinesPerWall = Mathf.CeilToInt(machineInstances.Count / 2.0f);
+        Vector3 roomScale = roomInstance.localScale;
+
+        // Position machines along the walls
+        float xPos = -roomScale.x / 2;
+        for (int i = 0; i < machineInstances.Count; i++)
+        {
+            Transform machineInstance = machineInstances[i];
+            Vector3 position;
+
+            // Scale the machine to its minimum size
+            Vector3 machineScale = new Vector3(minMachineWidth, minMachineHeight, minMachineWidth / 3f);
+            machineInstance.SetLossyScale(machineScale);
+
+            Vector3 localScale = machineInstance.localScale;
+            float halfZScale = localScale.z / 2;
+
+            xPos += localScale.x / 2f;
+            if (i < machinesPerWall) // Front wall
+            {
+                position = new Vector3(xPos, localScale.y / 2, - halfZScale);
+            }
+            else // Back wall
+            {
+                if (i == machinesPerWall)
+                {
+                    xPos = -roomScale.x / 2;
+                }
+                position = new Vector3(xPos, localScale.y / 2, -0.5f + halfZScale);
+            }
+
+            machineInstance.localPosition = position;
+            xPos += localScale.x + machineSpacing * localScale.x;
+        }
+    }
+
+
+
+    private void ConnectMachines(Transform fromMachine, Transform toMachine, bool isInput)
+    {
+        Vector3 fromPoint = fromMachine.position;
+        Vector3 toPoint = toMachine.position;
+
+        if (isInput)
+        {
+            fromPoint.z += fromMachine.localScale.z / 2;
+            toPoint.z -= toMachine.localScale.z / 2;
+        }
+        else
+        {
+            fromPoint.z -= fromMachine.localScale.z / 2;
+            toPoint.z += toMachine.localScale.z / 2;
+        }
+
+        LineRenderer lineRenderer = new GameObject("Connection").AddComponent<LineRenderer>();
+        lineRenderer.material = connectionMaterial;
+        lineRenderer.positionCount = 2;
+        lineRenderer.startWidth = 0.1f;
+        lineRenderer.endWidth = 0.1f;
+
+        lineRenderer.SetPosition(0, fromPoint);
+        lineRenderer.SetPosition(1, toPoint);
+
+        lineRenderer.transform.parent = fromMachine.parent;
     }
 
     private void WriteRoomsToFile(Dictionary<string, Room> rooms, string fileName)

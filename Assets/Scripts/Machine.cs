@@ -10,6 +10,7 @@ public class Machine
     public List<Machine> outputs { get; }
 
     public string Name { get; }
+    public string Room { get; }
 
     public Machine(string id)
     {
@@ -17,6 +18,8 @@ public class Machine
         inputs = new List<Machine>();
         outputs = new List<Machine>();
 
-        Name = id.Split('.').Last();
+        string[] parts = id.Split('.');
+        Name = parts.Last();
+        Room = string.Join(".", parts.Take(parts.Length - 1));
     }
 }
