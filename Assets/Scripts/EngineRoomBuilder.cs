@@ -40,11 +40,14 @@ public class EngineRoomBuilder : MonoBehaviour
     private float minMachineHeight = 1.0f;
     [SerializeField, MustBeAssigned]
     private Material connectionMaterial;
+    [SerializeField, MustBeAssigned]
+    private Gradient connectionGradient;
 
     [Button, ShowIf("@UnityEngine.Application.isPlaying")]
     private void Generate()
     {
         List<Room> rooms = BuildLayout();
+        //WriteRoomsToFile(rooms, "rooms");
         BuildRooms(rooms);
     }
 
@@ -59,7 +62,7 @@ public class EngineRoomBuilder : MonoBehaviour
             if (symbol.Kind == SymbolKind.NamedType)
             {
                 string className = symbol.ToString();
-                Debug.Log($"Class: {className}");
+                //Debug.Log($"Class: {className}");
 
                 Room room = new Room(className);
                 rooms.Add(className, room);
@@ -84,7 +87,7 @@ public class EngineRoomBuilder : MonoBehaviour
             Machine machine = new Machine(machineName);
             rooms[containingClassName].Machines.Add(machine);
 
-            Debug.Log($"Adding Machine: {machineName} in {containingClassName}");
+            //Debug.Log($"Adding Machine: {machineName} in {containingClassName}");
         }
 
         //Add connections for each machine in final pass
@@ -108,7 +111,7 @@ public class EngineRoomBuilder : MonoBehaviour
             // Iterate through the references and create connections
             foreach (string reference in references)
             {
-                Debug.Log($"{machineName} reference: {reference}");
+                //Debug.Log($"{machineName} reference: {reference}");
 
                 // Extract the target class and method/constructor names
                 string[] targetInfo = reference.Split('.');
@@ -131,23 +134,27 @@ public class EngineRoomBuilder : MonoBehaviour
             }
         }
 
-        WriteRoomsToFile(rooms, "rooms");
         return rooms.Values.ToList();
     }
 
     private void BuildRooms(List<Room> rooms)
     {
-        float xOffset = 0;
+        Dictionary<string, MachineInstance> machineInstances = new Dictionary<string, MachineInstance>();
+        
+        float xOffset = 0f;
+        float prevRoomScale = 0f;
 
         foreach (Room room in rooms)
         {
             // Instantiate and position the room
-            Transform roomInstance = Instantiate(roomPrefab, new Vector3(xOffset, 0, 0), Quaternion.identity);
+            Transform roomInstance = Instantiate(roomPrefab);
             roomInstance.name = room.Name;
 
             ScaleRoom(room.Machines.Count, roomInstance);
+            xOffset += roomInstance.localScale.x + prevRoomScale / 2f + roomPadding;
+            roomInstance.position = new Vector3(xOffset, 0, 0);
+            prevRoomScale = roomInstance.localScale.x;
 
-            Dictionary<string, MachineInstance> machineInstances = new Dictionary<string, MachineInstance>();
             List<Transform> machineTransforms = new List<Transform>();
 
             // Instantiate machines and place them along the walls
@@ -159,29 +166,27 @@ public class EngineRoomBuilder : MonoBehaviour
                 machineInstances.Add(machine.ID, new MachineInstance(machine, machineTransform));
                 machineTransforms.Add(machineTransform);
             }
+            PositionMachines(machineTransforms);
+        }
+        
+        // Connect machines
+        foreach (MachineInstance machineInstance in machineInstances.Values)
+        {
+            Machine machine = machineInstance.machine;
 
-            PositionMachines(machineTransforms, roomInstance);
-            xOffset += roomInstance.localScale.x + roomPadding;
-
-            // Connect machines
-            foreach (MachineInstance machineInstance in machineInstances.Values)
+            foreach (Machine inputMachine in machine.inputs)
             {
-                Machine machine = machineInstance.machine;
-
-                foreach (Machine inputMachine in machine.inputs)
+                if (machineInstances.TryGetValue(inputMachine.ID, out MachineInstance inputMachineInstance))
                 {
-                    if (machineInstances.TryGetValue(inputMachine.ID, out MachineInstance inputMachineInstance))
-                    {
-                        ConnectMachines(inputMachineInstance.transform, machineInstance.transform, true);
-                    }
+                    ConnectMachines(inputMachineInstance.transform, machineInstance.transform);
                 }
+            }
 
-                foreach (Machine outputMachine in machine.outputs)
+            foreach (Machine outputMachine in machine.outputs)
+            {
+                if (machineInstances.TryGetValue(outputMachine.ID, out MachineInstance outputMachineInstance))
                 {
-                    if (machineInstances.TryGetValue(outputMachine.ID, out MachineInstance outputMachineInstance))
-                    {
-                        ConnectMachines(machineInstance.transform, outputMachineInstance.transform, false);
-                    }
+                    ConnectMachines(machineInstance.transform, outputMachineInstance.transform);
                 }
             }
         }
@@ -200,13 +205,12 @@ public class EngineRoomBuilder : MonoBehaviour
         roomInstance.localScale = roomScale;
     }
 
-    private void PositionMachines(List<Transform> machineInstances, Transform roomInstance)
+    private void PositionMachines(List<Transform> machineInstances)
     {
         int machinesPerWall = Mathf.CeilToInt(machineInstances.Count / 2.0f);
-        Vector3 roomScale = roomInstance.localScale;
 
         // Position machines along the walls
-        float xPos = -roomScale.x / 2;
+        float xPos = -0.5f;
         for (int i = 0; i < machineInstances.Count; i++)
         {
             Transform machineInstance = machineInstances[i];
@@ -219,17 +223,17 @@ public class EngineRoomBuilder : MonoBehaviour
             Vector3 localScale = machineInstance.localScale;
             float halfZScale = localScale.z / 2;
 
-            xPos += localScale.x / 2f;
+            if (i == 0 || i == machinesPerWall)
+            {
+                xPos = -0.5f + localScale.x / 2f;
+            }
+
             if (i < machinesPerWall) // Front wall
             {
-                position = new Vector3(xPos, localScale.y / 2, - halfZScale);
+                position = new Vector3(xPos, localScale.y / 2, 0.5f - halfZScale);
             }
             else // Back wall
             {
-                if (i == machinesPerWall)
-                {
-                    xPos = -roomScale.x / 2;
-                }
                 position = new Vector3(xPos, localScale.y / 2, -0.5f + halfZScale);
             }
 
@@ -238,23 +242,22 @@ public class EngineRoomBuilder : MonoBehaviour
         }
     }
 
-
-
-    private void ConnectMachines(Transform fromMachine, Transform toMachine, bool isInput)
+    private void ConnectMachines(Transform fromMachine, Transform toMachine)
     {
         Vector3 fromPoint = fromMachine.position;
         Vector3 toPoint = toMachine.position;
 
-        if (isInput)
-        {
-            fromPoint.z += fromMachine.localScale.z / 2;
-            toPoint.z -= toMachine.localScale.z / 2;
-        }
-        else
-        {
-            fromPoint.z -= fromMachine.localScale.z / 2;
-            toPoint.z += toMachine.localScale.z / 2;
-        }
+        Vector3 fromScale = fromMachine.localScale;
+        Vector3 toScale = toMachine.localScale;
+
+        fromPoint.z += fromScale.z / 2;
+        toPoint.z -= toScale.z / 2;
+
+        fromPoint.y += Random.Range(-fromScale.y / 2f, fromScale.y / 2f);
+        toPoint.y += Random.Range(-toScale.y / 2f, toScale.y / 2f);
+
+        fromPoint.x += Random.Range(-fromScale.x / 2f, fromScale.x / 2f);
+        toPoint.x += Random.Range(-toScale.x / 2f, toScale.x / 2f);
 
         LineRenderer lineRenderer = new GameObject("Connection").AddComponent<LineRenderer>();
         lineRenderer.material = connectionMaterial;
@@ -262,19 +265,21 @@ public class EngineRoomBuilder : MonoBehaviour
         lineRenderer.startWidth = 0.1f;
         lineRenderer.endWidth = 0.1f;
 
+        lineRenderer.colorGradient = connectionGradient;
+
         lineRenderer.SetPosition(0, fromPoint);
         lineRenderer.SetPosition(1, toPoint);
 
         lineRenderer.transform.parent = fromMachine.parent;
     }
 
-    private void WriteRoomsToFile(Dictionary<string, Room> rooms, string fileName)
+    private void WriteRoomsToFile(List<Room> rooms, string fileName)
     {
         string path = Path.Combine(Application.dataPath, fileName + ".txt");
         using var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write);
         using var streamWriter = new StreamWriter(fileStream);
 
-        foreach (Room room in rooms.Values)
+        foreach (Room room in rooms)
         {
             streamWriter.WriteLine($"Room: {room.Name}");
             WriteIndentedLine(streamWriter, 1, "Machines:");
