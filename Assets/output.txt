@@ -9,6 +9,9 @@ Element: YetAnotherClass.NestedClass (NamedType)
 Referenced in:
 	- YetAnotherClass.SomeVirtualMethod()
 
+Element: ExtensionsTest (NamedType)
+Referenced in:
+
 Element: LineGridMask (NamedType)
 Referenced in:
 	- Main.Start()
@@ -42,6 +45,9 @@ Element: YetAnotherClass.CalledByNestedMethod() (Method)
 Referenced in:
 	- YetAnotherClass.SomeVirtualMethod()
 
+Element: ExtensionsTest.Test(string) (Method)
+Referenced in:
+
 Element: IGridMask.ShouldMaskPoint(Vector2Int) (Method)
 Referenced in:
 
@@ -56,6 +62,14 @@ Element: Main.Test() (Method)
 Referenced in:
 	- Main.Start()
 
+Element: string.Test() (Method)
+Referenced in:
+	- AnotherClass.SomeVirtualMethod()
+
+Element: str (Local)
+Referenced in:
+	- AnotherClass.SomeVirtualMethod()
+
 Element: YetAnotherClass.NestedClass.num (Property)
 Referenced in:
 	- YetAnotherClass.NestedClass.NestedClass()
@@ -69,10 +83,6 @@ Element: YetAnotherClass.NestedClass.NestedClass() (Method)
 Referenced in:
 	- YetAnotherClass.SomeVirtualMethod()
 
-Element: NestedMethod(int) (Method)
-Referenced in:
-	- YetAnotherClass.SomeVirtualMethod()
-
 Element: nested (Local)
 Referenced in:
 	- YetAnotherClass.SomeVirtualMethod()
@@ -80,6 +90,10 @@ Referenced in:
 Element: int num (Parameter)
 Referenced in:
 	- YetAnotherClass.SomeVirtualMethod()
+
+Element: string str (Parameter)
+Referenced in:
+	- ExtensionsTest.Test(string)
 
 Element: IGridMask (NamedType)
 Referenced in:

@@ -16,7 +16,8 @@ public class AnotherClass : MonoBehaviour
 
     public virtual void SomeVirtualMethod()
     {
-
+        string str = "Hello World";
+        str.Test();
     }
 
     protected void SomeProtectedMethod()
@@ -63,6 +64,15 @@ public class YetAnotherClass : AnotherClass
 
     private void CalledByNestedMethod()
     {
+        NestedMethod();
 
+        #region Nested Methods
+
+        void NestedMethod()
+        {
+            
+        }
+
+        #endregion
     }
 }

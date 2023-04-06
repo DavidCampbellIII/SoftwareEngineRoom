@@ -12,6 +12,7 @@ Room: AnotherClass
 			Inputs:
 				---> YetAnotherClass.SomeVirtualMethod()
 			Outputs:
+				<--- string.Test()
 		- AnotherClass.SomeProtectedMethod()
 			Inputs:
 				---> YetAnotherClass.SomeVirtualMethod()
@@ -27,12 +28,7 @@ Room: YetAnotherClass
 				<--- YetAnotherClass.CalledByNestedMethod()
 				<--- YetAnotherClass.NestedClass.num
 				<--- YetAnotherClass.NestedClass.NestedClass()
-				<--- NestedMethod(int)
 		- YetAnotherClass.CalledByNestedMethod()
-			Inputs:
-				---> YetAnotherClass.SomeVirtualMethod()
-			Outputs:
-		- NestedMethod(int)
 			Inputs:
 				---> YetAnotherClass.SomeVirtualMethod()
 			Outputs:
@@ -49,6 +45,16 @@ Room: YetAnotherClass.NestedClass
 				---> YetAnotherClass.SomeVirtualMethod()
 			Outputs:
 				<--- YetAnotherClass.NestedClass.num
+-----------------------------------------------------------
+Room: ExtensionsTest
+	Machines:
+		- ExtensionsTest.Test(string)
+			Inputs:
+			Outputs:
+		- string.Test()
+			Inputs:
+				---> AnotherClass.SomeVirtualMethod()
+			Outputs:
 -----------------------------------------------------------
 Room: LineGridMask
 	Machines:

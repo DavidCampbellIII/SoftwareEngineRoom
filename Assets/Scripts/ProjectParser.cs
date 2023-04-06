@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using System;
+using System.Reflection;
 
 public class ProjectParser : MonoBehaviour
 {
@@ -32,29 +33,17 @@ public class ProjectParser : MonoBehaviour
         CSharpCompilation compilation = CSharpCompilation.Create("ProjectCompilation", syntaxTrees);
         List<SemanticModel> semanticModelList = syntaxTrees.Select(tree => compilation.GetSemanticModel(tree)).ToList();
 
-        //var allNodes = syntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes());
-
-        // Finding all major C# elements
-        //var namespaceDeclarations = allNodes.OfType<NamespaceDeclarationSyntax>();
-        //var classDeclarations = allNodes.OfType<ClassDeclarationSyntax>();
-        //var interfaceDeclarations = allNodes.OfType<InterfaceDeclarationSyntax>();
-        //var fieldDeclarations = allNodes.OfType<FieldDeclarationSyntax>();
-        //var propertyDeclarations = allNodes.OfType<PropertyDeclarationSyntax>();
-        //var methodDeclarations = allNodes.OfType<MethodDeclarationSyntax>();
-        //var constructorDeclarations = allNodes.OfType<ConstructorDeclarationSyntax>();
-
-        // Generating reference information for each element
         Dictionary<ISymbol, HashSet<string>> referencedSymbols = new Dictionary<ISymbol, HashSet<string>>();
 
         // Find all class declarations in the syntax trees along with their corresponding semantic models
-        var classDeclarationsWithModels =
+        IEnumerable<(ClassDeclarationSyntax Declaration, SemanticModel SemanticModel)> classDeclarationsWithModels =
             syntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>()
                         .Select(decl => (Declaration: decl, SemanticModel: compilation.GetSemanticModel(tree))));
 
         // Add class symbols to the referencedSymbols dictionary if not already present
-        foreach (var (classDeclaration, semanticModel) in classDeclarationsWithModels)
+        foreach ((ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel) in classDeclarationsWithModels)
         {
-            var classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration);
+            INamedTypeSymbol classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration);
             if (classSymbol != null && !referencedSymbols.ContainsKey(classSymbol))
             {
                 referencedSymbols.Add(classSymbol, new HashSet<string>());
@@ -62,13 +51,13 @@ public class ProjectParser : MonoBehaviour
         }
 
         //Add method symbols to ensure even non-referenced ones are added
-        foreach (var semanticModel in semanticModelList)
+        foreach (SemanticModel semanticModel in semanticModelList)
         {
             SyntaxNode root = semanticModel.SyntaxTree.GetRoot();
             var methodDeclarations = root.DescendantNodes().OfType<MethodDeclarationSyntax>();
-            foreach(var method in methodDeclarations)
+            foreach(MethodDeclarationSyntax method in methodDeclarations)
             {
-                var methodSymbol = semanticModel.GetDeclaredSymbol(method);
+                IMethodSymbol methodSymbol = semanticModel.GetDeclaredSymbol(method);
                 if (methodSymbol != null && !referencedSymbols.ContainsKey(methodSymbol))
                 {
                     referencedSymbols.Add(methodSymbol, new HashSet<string>());
@@ -76,7 +65,7 @@ public class ProjectParser : MonoBehaviour
             }
         }
 
-        foreach (var semanticModel in semanticModelList)
+        foreach (SemanticModel semanticModel in semanticModelList)
         {
             SyntaxNode root = semanticModel.SyntaxTree.GetRoot();
             SymbolInfo info = semanticModel.GetSymbolInfo(root);
@@ -85,21 +74,21 @@ public class ProjectParser : MonoBehaviour
                 referencedSymbols.Add(info.Symbol, new HashSet<string>());
             }
 
-            foreach (var syntaxNode in root.DescendantNodes())
+            foreach (SyntaxNode syntaxNode in root.DescendantNodes())
             {
-                var symbolInfo = semanticModel.GetSymbolInfo(syntaxNode);
-                if (symbolInfo.Symbol == null)
+                ISymbol symbol = semanticModel.GetSymbolInfo(syntaxNode).Symbol;
+                if (symbol == null || IsLocalFunction(symbol))
                 {
                     continue;
                 }
 
-                if (!referencedSymbols.ContainsKey(symbolInfo.Symbol))
+                if (!referencedSymbols.ContainsKey(symbol))
                 {
-                    referencedSymbols[symbolInfo.Symbol] = new HashSet<string>();
+                    referencedSymbols[symbol] = new HashSet<string>();
                 }
 
-                var containingMethod = syntaxNode.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
-                var containingType = syntaxNode.Ancestors().OfType<ClassDeclarationSyntax>().FirstOrDefault();
+                MethodDeclarationSyntax containingMethod = syntaxNode.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
+                ClassDeclarationSyntax containingType = syntaxNode.Ancestors().OfType<ClassDeclarationSyntax>().FirstOrDefault();
 
                 if (containingType == null)
                 {
@@ -112,29 +101,13 @@ public class ProjectParser : MonoBehaviour
                     if (ctor != null)
                     {
                         string str = $"{semanticModel.GetDeclaredSymbol(ctor)}";
-                        referencedSymbols[symbolInfo.Symbol].Add(str);
+                        referencedSymbols[symbol].Add(str);
                     }
                 }
                 else
                 {
-                    //THIS DOES NOT CORRECTLY HANDLE NESTED METHODS
-                    string methodName = $"{semanticModel.GetDeclaredSymbol(containingMethod)}";
-                    if (syntaxNode is LocalFunctionStatementSyntax localMethod)
-                    {
-                        Debug.Log($"Local method found! {semanticModel.GetDeclaredSymbol(localMethod)}");
-                        // Check if the syntax node is a local method
-                        if (containingMethod.DescendantNodes().OfType<LocalFunctionStatementSyntax>().Contains(localMethod))
-                        {
-                            // Prepend the parent method's name to the local method's name
-                            string localMethodName = $"{semanticModel.GetDeclaredSymbol(localMethod)}";
-                            string formattedName = $"{containingType.Identifier}.{methodName}.{localMethodName}";
-                            referencedSymbols[symbolInfo.Symbol].Add(formattedName);
-                        }
-                    }
-                    else
-                    {
-                        referencedSymbols[symbolInfo.Symbol].Add(methodName);
-                    }
+                    IMethodSymbol containingMethodSymbol = semanticModel.GetDeclaredSymbol(containingMethod);
+                    referencedSymbols[symbol].Add(containingMethodSymbol.ToString());
                 }
             }
         }
@@ -147,6 +120,11 @@ public class ProjectParser : MonoBehaviour
         return referencedSymbols;
     }
 
+    private bool IsLocalFunction(ISymbol symbol)
+    {
+        return symbol is IMethodSymbol methodSymbol && methodSymbol.MethodKind == MethodKind.LocalFunction;
+    }
+
     private void WriteToFile(Dictionary<ISymbol, HashSet<string>> referencedSymbols)
     {
         StringBuilder output = new StringBuilder();
@@ -156,7 +134,7 @@ public class ProjectParser : MonoBehaviour
             output.AppendLine($"Element: {symbol} ({symbol.Kind})");
             output.AppendLine("Referenced in:");
 
-            foreach (var reference in entry.Value)
+            foreach (string reference in entry.Value)
             {
                 output.AppendLine($"\t- {reference}");
             }
