@@ -24,12 +24,15 @@ public class EngineRoomBuilder : MonoBehaviour
     }
 
     #endregion
+
     [SerializeField, MustBeAssigned]
     private ProjectParser parser;
     [SerializeField, MustBeAssigned]
     private Transform roomPrefab;
     [SerializeField, MustBeAssigned]
     private Transform machinePrefab;
+    [SerializeField]
+    private int maxRoomsPerHall = 10;
     [SerializeField]
     private float roomPadding = 1.0f;
     [SerializeField]
@@ -85,8 +88,14 @@ public class EngineRoomBuilder : MonoBehaviour
 
             // Create a machine for the method, field, or property and add it to the corresponding room
             Machine machine = new Machine(machineName);
-            rooms[containingClassName].Machines.Add(machine);
-
+            if(rooms.TryGetValue(containingClassName, out Room room))
+            {
+                room.Machines.Add(machine);
+            }
+            else
+            {
+                Debug.LogWarning($"Could not find room {containingClassName} for machine {machineName}");
+            }
             //Debug.Log($"Adding Machine: {machineName} in {containingClassName}");
         }
 
@@ -106,7 +115,12 @@ public class EngineRoomBuilder : MonoBehaviour
 
             // Get the containing class name
             string containingClassName = symbol.ContainingType.ToString();
-            Machine machine = rooms[containingClassName].Machines.Find(m => m.ID == machineName);
+            if(!rooms.TryGetValue(containingClassName, out Room room))
+            {
+                Debug.LogWarning($"Could not find room {containingClassName} for machine {machineName}");
+                continue;
+            }
+            Machine machine = room.Machines.Find(m => m.ID == machineName);
 
             // Iterate through the references and create connections
             foreach (string reference in references)
@@ -121,7 +135,13 @@ public class EngineRoomBuilder : MonoBehaviour
                 //Debug.Log($"Target class: {targetClassName}");
                 //Debug.Log($"Target machine: {targetMachineName}");
 
-                Machine targetMachine = rooms[targetClassName].Machines.FirstOrDefault(m => m.ID == targetMachineName);
+                if(!rooms.TryGetValue(targetClassName, out Room targetRoom))
+                {
+                    Debug.LogWarning($"Could not find room {targetClassName} for machine {machineName}");
+                    continue;
+                }
+
+                Machine targetMachine = targetRoom.Machines.FirstOrDefault(m => m.ID == targetMachineName);
                 if (targetMachine != null)
                 {
                     machine.inputs.Add(targetMachine);
@@ -142,7 +162,9 @@ public class EngineRoomBuilder : MonoBehaviour
         Dictionary<string, MachineInstance> machineInstances = new Dictionary<string, MachineInstance>();
         
         float xOffset = 0f;
+        float zOffset = 0f;
         float prevRoomScale = 0f;
+        int roomCount = 1;
 
         foreach (Room room in rooms)
         {
@@ -151,8 +173,16 @@ public class EngineRoomBuilder : MonoBehaviour
             roomInstance.name = room.Name;
 
             ScaleRoom(room.Machines.Count, roomInstance);
-            xOffset += roomInstance.localScale.x + prevRoomScale / 2f + roomPadding;
-            roomInstance.position = new Vector3(xOffset, 0, 0);
+            if(roomCount % (maxRoomsPerHall + 1) == 0)
+            {
+                xOffset = 0f;
+                zOffset += roomInstance.localScale.z * 2f + roomPadding;
+            }
+            else
+            {
+                xOffset += roomInstance.localScale.x + prevRoomScale / 2f + roomPadding;
+            }
+            roomInstance.position = new Vector3(xOffset, 0, zOffset);
             prevRoomScale = roomInstance.localScale.x;
 
             List<Transform> machineTransforms = new List<Transform>();
@@ -160,6 +190,11 @@ public class EngineRoomBuilder : MonoBehaviour
             // Instantiate machines and place them along the walls
             foreach (Machine machine in room.Machines)
             {
+                if (machineInstances.ContainsKey(machine.ID))
+                {
+                    continue;
+                }
+
                 Transform machineTransform = Instantiate(machinePrefab);
                 machineTransform.parent = roomInstance;
                 machineTransform.name = machine.Name;
@@ -167,6 +202,7 @@ public class EngineRoomBuilder : MonoBehaviour
                 machineTransforms.Add(machineTransform);
             }
             PositionMachines(machineTransforms);
+            roomCount++;
         }
         
         // Connect machines
@@ -230,11 +266,11 @@ public class EngineRoomBuilder : MonoBehaviour
 
             if (i < machinesPerWall) // Front wall
             {
-                position = new Vector3(xPos, localScale.y / 2, 0.5f - halfZScale);
+                position = new Vector3(xPos, 0.5f, 0.5f - halfZScale);
             }
             else // Back wall
             {
-                position = new Vector3(xPos, localScale.y / 2, -0.5f + halfZScale);
+                position = new Vector3(xPos, 0.5f, -0.5f + halfZScale);
             }
 
             machineInstance.localPosition = position;

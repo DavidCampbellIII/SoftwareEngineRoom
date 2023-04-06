@@ -391,6 +391,7 @@ MonoBehaviour:
     type: 3}
   machinePrefab: {fileID: 2869967473844556885, guid: c32abfeadcb48884aab47fba927645cc,
     type: 3}
+  maxRoomsPerHall: 10
   roomPadding: 0
   machineSpacing: 0.5
   minMachineWidth: 1
@@ -452,7 +453,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 068f59e51a4f22147979d54cc1397993, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rootProjectDirectory: Scripts/TestProject
+  rootProjectDirectory: D:/Game_Development/Games/The Great Geometric Multiverse
+    Tour/Assets/Scripts
 --- !u!1001 &823435310
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -13,14 +13,13 @@ using System.Reflection;
 
 public class ProjectParser : MonoBehaviour
 {
-    [SerializeField]
-    private string rootProjectDirectory;
+    public string rootProjectDirectory;
 
     [Button]
     public Dictionary<ISymbol, HashSet<string>> ScanProject(bool writeToFile=false)
     {
-        string path = Path.Combine(Application.dataPath, rootProjectDirectory);
-        string[] csharpFiles = Directory.GetFiles(path, "*.cs", SearchOption.AllDirectories);
+        //string path = Path.Combine(Application.dataPath, rootProjectDirectory);
+        string[] csharpFiles = Directory.GetFiles(rootProjectDirectory, "*.cs", SearchOption.AllDirectories);
         List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
 
         foreach (string file in csharpFiles)
