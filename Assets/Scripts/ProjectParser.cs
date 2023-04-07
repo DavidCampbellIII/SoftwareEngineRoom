@@ -38,13 +38,24 @@ public class ProjectParser : MonoBehaviour
         foreach (SemanticModel semanticModel in semanticModelList)
         {
             SyntaxNode root = semanticModel.SyntaxTree.GetRoot();
-            var classDeclarations = root.DescendantNodes().OfType<ClassDeclarationSyntax>();
-            foreach (ClassDeclarationSyntax classDeclaration in classDeclarations)
+            var typeDeclarations = root.DescendantNodes()
+            .Where(node => node is ClassDeclarationSyntax && !node.IsKind(SyntaxKind.GenericName)
+                || node is StructDeclarationSyntax && !node.IsKind(SyntaxKind.GenericName)
+                || node is InterfaceDeclarationSyntax
+                || node is EnumDeclarationSyntax)
+            .ToList();
+
+            var delegateDeclarations = root.DescendantNodes().OfType<DelegateDeclarationSyntax>().ToList();
+
+            foreach (SyntaxNode declaration in typeDeclarations.Concat(delegateDeclarations))
             {
-                INamedTypeSymbol classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration);
-                if (classSymbol != null && !referencedSymbols.ContainsKey(classSymbol))
+                if (declaration is BaseTypeDeclarationSyntax baseTypeDeclaration)
                 {
-                    referencedSymbols.Add(classSymbol, new HashSet<string>());
+                    INamedTypeSymbol typeSymbol = semanticModel.GetDeclaredSymbol(baseTypeDeclaration);
+                    if (typeSymbol != null && !referencedSymbols.ContainsKey(typeSymbol))
+                    {
+                        referencedSymbols.Add(typeSymbol, new HashSet<string>());
+                    }
                 }
             }
 
@@ -93,7 +104,7 @@ public class ProjectParser : MonoBehaviour
                 }
 
                 MethodDeclarationSyntax containingMethod = syntaxNode.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
-                ClassDeclarationSyntax containingType = syntaxNode.Ancestors().OfType<ClassDeclarationSyntax>().FirstOrDefault();
+                BaseTypeDeclarationSyntax containingType = syntaxNode.Ancestors().OfType<BaseTypeDeclarationSyntax>().FirstOrDefault();
 
                 if (containingType == null)
                 {

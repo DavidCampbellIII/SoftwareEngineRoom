@@ -537,7 +537,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 068f59e51a4f22147979d54cc1397993, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rootProjectDirectory: D:/Game_Development/Games/SoftwareEngineRoom/Assets/Scripts
+  rootProjectDirectory: D:/Game_Development/Games/The Backrooms Game FULL Edition/Assets/Scripts
 --- !u!1001 &823435310
 PrefabInstance:
   m_ObjectHideFlags: 0

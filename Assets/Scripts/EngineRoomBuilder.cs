@@ -68,6 +68,11 @@ public class EngineRoomBuilder : MonoBehaviour
                 //Debug.Log($"Class: {className}");
 
                 Room room = new Room(className);
+                if(rooms.ContainsKey(className))
+                {
+                    Debug.LogWarning($"Duplicate room name {className}");
+                    continue;
+                }
                 rooms.Add(className, room);
             }
         }
