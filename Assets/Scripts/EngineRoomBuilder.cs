@@ -164,7 +164,7 @@ public class EngineRoomBuilder : MonoBehaviour
         float xOffset = 0f;
         float zOffset = 0f;
         float prevRoomScale = 0f;
-        int roomCount = 1;
+        int roomIndex = 0;
 
         foreach (Room room in rooms)
         {
@@ -173,14 +173,14 @@ public class EngineRoomBuilder : MonoBehaviour
             roomInstance.name = room.Name;
 
             ScaleRoom(room.Machines.Count, roomInstance);
-            if(roomCount % (maxRoomsPerHall + 1) == 0)
+            if(roomIndex % maxRoomsPerHall == 0 && roomIndex != 0f)
             {
                 xOffset = 0f;
                 zOffset += roomInstance.localScale.z * 2f + roomPadding;
             }
             else
             {
-                xOffset += roomInstance.localScale.x + prevRoomScale / 2f + roomPadding;
+                xOffset += roomInstance.localScale.x / 2f + prevRoomScale / 2f + roomPadding;
             }
             roomInstance.position = new Vector3(xOffset, 0, zOffset);
             prevRoomScale = roomInstance.localScale.x;
@@ -202,7 +202,7 @@ public class EngineRoomBuilder : MonoBehaviour
                 machineTransforms.Add(machineTransform);
             }
             PositionMachines(machineTransforms);
-            roomCount++;
+            roomIndex++;
         }
         
         // Connect machines
@@ -266,11 +266,11 @@ public class EngineRoomBuilder : MonoBehaviour
 
             if (i < machinesPerWall) // Front wall
             {
-                position = new Vector3(xPos, 0.5f, 0.5f - halfZScale);
+                position = new Vector3(xPos, localScale.y / 2f, 0.5f - halfZScale);
             }
             else // Back wall
             {
-                position = new Vector3(xPos, 0.5f, -0.5f + halfZScale);
+                position = new Vector3(xPos, localScale.y / 2f, -0.5f + halfZScale);
             }
 
             machineInstance.localPosition = position;

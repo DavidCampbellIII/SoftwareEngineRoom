@@ -34,27 +34,22 @@ public class ProjectParser : MonoBehaviour
 
         Dictionary<ISymbol, HashSet<string>> referencedSymbols = new Dictionary<ISymbol, HashSet<string>>();
 
-        // Find all class declarations in the syntax trees along with their corresponding semantic models
-        IEnumerable<(ClassDeclarationSyntax Declaration, SemanticModel SemanticModel)> classDeclarationsWithModels =
-            syntaxTrees.SelectMany(tree => tree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>()
-                        .Select(decl => (Declaration: decl, SemanticModel: compilation.GetSemanticModel(tree))));
-
-        // Add class symbols to the referencedSymbols dictionary if not already present
-        foreach ((ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel) in classDeclarationsWithModels)
-        {
-            INamedTypeSymbol classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration);
-            if (classSymbol != null && !referencedSymbols.ContainsKey(classSymbol))
-            {
-                referencedSymbols.Add(classSymbol, new HashSet<string>());
-            }
-        }
-
-        //Add method symbols to ensure even non-referenced ones are added
+        //First pass to add in all the classes and methods
         foreach (SemanticModel semanticModel in semanticModelList)
         {
             SyntaxNode root = semanticModel.SyntaxTree.GetRoot();
+            var classDeclarations = root.DescendantNodes().OfType<ClassDeclarationSyntax>();
+            foreach (ClassDeclarationSyntax classDeclaration in classDeclarations)
+            {
+                INamedTypeSymbol classSymbol = semanticModel.GetDeclaredSymbol(classDeclaration);
+                if (classSymbol != null && !referencedSymbols.ContainsKey(classSymbol))
+                {
+                    referencedSymbols.Add(classSymbol, new HashSet<string>());
+                }
+            }
+
             var methodDeclarations = root.DescendantNodes().OfType<MethodDeclarationSyntax>();
-            foreach(MethodDeclarationSyntax method in methodDeclarations)
+            foreach (MethodDeclarationSyntax method in methodDeclarations)
             {
                 IMethodSymbol methodSymbol = semanticModel.GetDeclaredSymbol(method);
                 if (methodSymbol != null && !referencedSymbols.ContainsKey(methodSymbol))
@@ -62,8 +57,19 @@ public class ProjectParser : MonoBehaviour
                     referencedSymbols.Add(methodSymbol, new HashSet<string>());
                 }
             }
+
+            var ctorDeclarations = root.DescendantNodes().OfType<ConstructorDeclarationSyntax>();
+            foreach (ConstructorDeclarationSyntax ctor in ctorDeclarations)
+            {
+                IMethodSymbol ctorSymbol = semanticModel.GetDeclaredSymbol(ctor);
+                if (ctorSymbol != null && !referencedSymbols.ContainsKey(ctorSymbol))
+                {
+                    referencedSymbols.Add(ctorSymbol, new HashSet<string>());
+                }
+            }
         }
 
+        //Second pass to add in all the references
         foreach (SemanticModel semanticModel in semanticModelList)
         {
             SyntaxNode root = semanticModel.SyntaxTree.GetRoot();
