@@ -3,13 +3,11 @@ using System.Collections.Generic;
 
 public class PathPipeCreator : MonoBehaviour
 {
-    [SerializeField, Tooltip("Radius of the pipe.")]
+    [SerializeField]
     private float pipeRadius = 0.5f;
-
-    [SerializeField, Tooltip("Number of sides for the pipe.")]
+    [SerializeField]
     private int pipeSides = 6;
-
-    [SerializeField, Tooltip("Material for the pipe mesh.")]
+    [SerializeField]
     private Material pipeMaterial;
 
     private MeshFilter meshFilter;
