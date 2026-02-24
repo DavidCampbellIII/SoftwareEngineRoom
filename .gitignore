@@ -63,3 +63,6 @@ Assets/output.txt
 
 #macOS
 *.DS_Store
+
+#JetBrains IDE
+*.idea
